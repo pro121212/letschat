@@ -4,8 +4,10 @@ import android.annotation.SuppressLint;
 
 import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
+import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
 import com.xinsane.letschat.App;
+import com.xinsane.util.LogUtil;
 
 public class Location {
 
@@ -13,15 +15,28 @@ public class Location {
     private static AMapLocationClient mLocationClient =
             new AMapLocationClient(App.getContext());
 
-    private static String country, city;
+    private static String province, city;
+    private static Listener listener;
 
     static {
+        AMapLocationClientOption option = new AMapLocationClientOption();
+        option.setLocationMode(AMapLocationClientOption.AMapLocationMode.Battery_Saving);
+        option.setOnceLocation(true);
+        option.setOnceLocationLatest(true);
+        option.setLocationCacheEnable(false);
+        mLocationClient.setLocationOption(option);
         mLocationClient.setLocationListener(new AMapLocationListener() {
             @Override
             public void onLocationChanged(AMapLocation aMapLocation) {
-                country = aMapLocation.getCountry();
-                city = aMapLocation.getCity();
-                mLocationClient.stopLocation();
+                if (aMapLocation.getErrorCode() == 0) {
+                    province = aMapLocation.getProvince().replace("省", "");
+                    city = province + aMapLocation.getCity().replace("市", "");
+                    if (listener != null)
+                        listener.onLocation(city);
+                } else {
+                    LogUtil.e("无法获取定位：code=" + aMapLocation.getErrorCode() +
+                                ", msg=" + aMapLocation.getErrorInfo());
+                }
             }
         });
     }
@@ -30,15 +45,15 @@ public class Location {
         mLocationClient.startLocation();
     }
 
-    public static void stop() {
-        mLocationClient.stopLocation();
-    }
-
-    public static String getCountry() {
-        return country;
+    public static void setListener(Listener listener) {
+        Location.listener = listener;
     }
 
     public static String getCity() {
         return city;
+    }
+
+    public interface Listener {
+        void onLocation(String city);
     }
 }

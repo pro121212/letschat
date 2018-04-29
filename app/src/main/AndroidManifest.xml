@@ -36,10 +36,20 @@
             android:name="com.amap.api.v2.apikey"
             android:value="11622c7905cd9e82a07e1218e78a633f" />
 
-        <activity android:name=".view.MainActivity">
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="com.xinsane.letschat.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/fileprovider_paths" />
+        </provider>
+
+        <activity android:name=".view.MainActivity"
+            android:windowSoftInputMode="stateAlwaysHidden|adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -47,7 +57,11 @@
         <service android:name="com.amap.api.location.APSService" />
         <service
             android:name=".service.SocketService"
-            android:exported="false"></service>
+            android:exported="false" />
+
+        <activity android:name=".view.ConfirmPhotoActivity" />
+        <activity android:name=".view.ViewPhotoActivity"
+            android:theme="@style/NoTitle"/>
     </application>
 
 </manifest>

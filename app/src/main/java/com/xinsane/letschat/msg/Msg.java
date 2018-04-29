@@ -1,4 +1,4 @@
-package com.xinsane.letschat.pojo;
+package com.xinsane.letschat.msg;
 
 import android.view.View;
 
