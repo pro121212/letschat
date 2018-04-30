@@ -135,9 +135,7 @@ public class MainActivity extends AppCompatActivity implements SocketService.Eve
                 service = ((SocketService.ServiceBinder) binder).getService();
                 service.setReceiveListener(MainActivity.this);
                 if (!service.isConnected())
-                    service.reconnect();
-                else
-                    onConnected();
+                    service.requestReconnect();
             }
             @Override
             public void onServiceDisconnected(ComponentName name) {
@@ -358,6 +356,7 @@ public class MainActivity extends AppCompatActivity implements SocketService.Eve
     }
 
     private void initList() {
+        list.clear();
         List<Wrapper> wrappers = DataSupport.order("id desc").limit(20).find(Wrapper.class);
         if (wrappers.isEmpty())
             list.add(new CenterTip("正在连接到聊天室..."));
@@ -386,12 +385,11 @@ public class MainActivity extends AppCompatActivity implements SocketService.Eve
                     list.add(msg);
             }
             list.add(new CenterTip("以上为近期历史消息"));
-            list.add(new CenterTip("正在连接到聊天室..."));
         }
     }
 
     private void notifyPushOne() {
-        adapter.notifyItemInserted(list.size() - 1);
+        adapter.notifyItemInserted(adapter.getItemCount());
     }
 
     private void sendText() {

@@ -31,6 +31,8 @@ import java.net.SocketAddress;
 import java.util.UUID;
 
 public class SocketService extends Service implements Runnable {
+    private static final String host = "aliyun.xinsane.com";
+    private static final int port = 7214;
 
     private Thread thread;
     private Socket socket;
@@ -41,6 +43,7 @@ public class SocketService extends Service implements Runnable {
     private String city = null;
     private String name = "我";
     private int reconnectTime = 1;
+    private int reconnects = 0;
 
     public String getName() {
         return name;
@@ -148,7 +151,18 @@ public class SocketService extends Service implements Runnable {
         return new ServiceBinder();
     }
 
-    private void preReConnect() {
+    @Override
+    public boolean onUnbind(Intent intent) {
+        listener = null;
+        return super.onUnbind(intent);
+    }
+
+    private void preReconnect() {
+        if (reconnects >= 10) {
+            if (listener != null)
+                listener.onError("重连次数过多，取消连接");
+            return;
+        }
         reconnectTime *= 2;
         if (reconnectTime > 30)
             reconnectTime = 30;
@@ -167,8 +181,16 @@ public class SocketService extends Service implements Runnable {
         }.start();
     }
 
-    public void reconnect() {
+    public void requestReconnect() {
+        if (reconnects >= 10)
+            reconnect();
+        else if (listener != null)
+            listener.onTip(new CenterTip("等待重新连接..."));
+    }
+
+    private void reconnect() {
         if (thread == null || !thread.isAlive()) {
+            reconnects ++;
             CenterTip centerTip = new CenterTip("正在重新连接...");
             if (listener != null)
                 listener.onTip(centerTip);
@@ -185,6 +207,7 @@ public class SocketService extends Service implements Runnable {
             if (!connect())
                 return;
             reconnectTime = 1;
+            reconnects = 0;
             city = Location.getCity();
             if (city != null) {
                 name = Name.getRandomName() + " · " + city;
@@ -261,7 +284,7 @@ public class SocketService extends Service implements Runnable {
             }
         } catch (IOException e) {
             e.printStackTrace();
-            preReConnect();
+            preReconnect();
         }
     }
 
@@ -279,7 +302,7 @@ public class SocketService extends Service implements Runnable {
                     final File file = new File(dir + "/" +
                             UUID.randomUUID().toString().replace("-", "") + ".jpg");
 
-                    socket = new Socket("192.168.1.188", 7214);
+                    socket = new Socket(host, port);
                     socket.setSoTimeout(10000);
                     DataOutputStream out = new DataOutputStream(socket.getOutputStream());
                     DataInputStream in = new DataInputStream(socket.getInputStream());
@@ -313,8 +336,8 @@ public class SocketService extends Service implements Runnable {
         try {
             socket = new Socket();
             SocketAddress socAddress = new InetSocketAddress(
-                    "192.168.1.188",
-                    7214);
+                    host,
+                    port);
             socket.connect(socAddress, 3000);
             if (!socket.isConnected())
                 throw new Exception("无法连接服务器!");
@@ -324,7 +347,7 @@ public class SocketService extends Service implements Runnable {
                 listener.onConnected();
         } catch (Exception e) {
             e.printStackTrace();
-            preReConnect();
+            preReconnect();
             return false;
         }
         return true;
