@@ -39,26 +39,67 @@
         android:background="#e3e3e3"/>
 
     <LinearLayout
+        android:id="@+id/input_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
+        <ImageView
+            android:id="@+id/btn_input_audio"
+            android:layout_width="35dp"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_audio"
+            android:layout_gravity="center"
+            android:padding="8dp"
+            android:contentDescription="audio" />
         <EditText
             android:id="@+id/text"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_marginLeft="7dp"
-            android:layout_marginStart="7dp"
             android:hint="biu~"
             android:layout_weight="1"
-            android:imeOptions="actionSend|actionDone"/>
+            android:imeOptions="actionSend|actionDone"
+            android:inputType="text" />
         <Button
             android:id="@+id/send"
-            android:layout_width="40dp"
+            android:layout_width="32dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text=">"
             android:background="@android:color/transparent"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/input_audio"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <ImageView
+            android:id="@+id/btn_input_text"
+            android:layout_width="35dp"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_keyboard_black_24dp"
+            android:layout_gravity="center"
+            android:layout_marginStart="5dp"
+            android:layout_marginLeft="5dp"
+            android:contentDescription="keyboard" />
+        <com.xinsane.letschat.view.control.RecordButton
+            android:id="@+id/btn_start_record"
+            android:layout_width="0dp"
+            android:layout_height="35dp"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/border_radius"
+            style="?android:attr/borderlessButtonStyle"
+            android:text="按住 说话"/>
+        <View
+            android:layout_width="5dp"
+            android:layout_height="0dp"/>
     </LinearLayout>
 
 </LinearLayout>

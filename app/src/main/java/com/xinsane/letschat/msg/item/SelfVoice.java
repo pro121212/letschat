@@ -1,0 +1,121 @@
+package com.xinsane.letschat.msg.item;
+
+import android.media.MediaPlayer;
+import android.support.v7.widget.RecyclerView;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.xinsane.letschat.R;
+import com.xinsane.letschat.database.Wrapper;
+import com.xinsane.letschat.msg.Item;
+
+import org.litepal.annotation.Column;
+import org.litepal.crud.DataSupport;
+
+import java.io.IOException;
+
+public class SelfVoice  extends DataSupport implements Item {
+    private String info, filepath, text;
+
+    @Column(ignore = true)
+    private MediaPlayer player;
+
+    @Override
+    public int resource() {
+        return R.layout.item_self_voice;
+    }
+
+    @Override
+    public void onBindViewHolder(RecyclerView.ViewHolder viewHolder) {
+        ViewHolder holder = (ViewHolder) viewHolder;
+        holder.infoView.setText(info);
+        holder.textView.setText(text);
+    }
+
+    @Override
+    public synchronized boolean save() {
+        boolean is = super.save();
+        new Wrapper().setType("self_voice").setSelfVoice(this).save();
+        return is;
+    }
+
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        TextView infoView, textView;
+        public ViewHolder(View view, final Item.Adapter adapter) {
+            super(view);
+            infoView = view.findViewById(R.id.info);
+            textView = view.findViewById(R.id.text);
+            view.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // 获取当前绑定的数据位置
+                    int position = getAdapterPosition();
+
+                    // 获取当前绑定的数据
+                    final SelfVoice data = (SelfVoice) adapter.getItemList().get(position);
+
+                    try {
+                        // 准备播放
+                        if (data.player == null) {
+                            data.player = new MediaPlayer();
+                            data.player.setDataSource(data.filepath);
+                            data.player.setLooping(false);
+                            data.player.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                                @Override
+                                public void onCompletion(MediaPlayer mp) {
+                                    data.player.stop();
+                                    data.player.release();
+                                    data.player = null;
+                                    textView.setText(data.text);
+                                }
+                            });
+                        }
+
+                        // 如果正在播放则停止播放
+                        else if (data.player.isPlaying()) {
+                            data.player.stop();
+                            data.player.release();
+                            data.player = null;
+                            textView.setText(data.text);
+                            return;
+                        }
+
+                        // 开始播放
+                        data.player.prepare();
+                        data.player.start();
+                        textView.setText("正在播放...");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        data.player = null;
+                        textView.setText(data.text);
+                        Toast.makeText(adapter.getContext(), "无法播放音频", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        }
+    }
+
+    // Constructor、getter、setter
+    public String getInfo() {
+        return info;
+    }
+    public SelfVoice setInfo(String info) {
+        this.info = info;
+        return this;
+    }
+    public String getText() {
+        return text;
+    }
+    public SelfVoice setText(String text) {
+        this.text = text;
+        return this;
+    }
+    public String getFilepath() {
+        return filepath;
+    }
+    public SelfVoice setFilepath(String filepath) {
+        this.filepath = filepath;
+        return this;
+    }
+}

@@ -35,13 +35,15 @@ import android.widget.Toast;
 
 import com.xinsane.letschat.R;
 import com.xinsane.letschat.database.Wrapper;
-import com.xinsane.letschat.msg.Msg;
+import com.xinsane.letschat.msg.Item;
 import com.xinsane.letschat.msg.item.CenterTip;
 import com.xinsane.letschat.msg.item.OtherPhoto;
 import com.xinsane.letschat.msg.item.OtherText;
 import com.xinsane.letschat.msg.item.SelfPhoto;
 import com.xinsane.letschat.msg.item.SelfText;
+import com.xinsane.letschat.msg.item.SelfVoice;
 import com.xinsane.letschat.service.SocketService;
+import com.xinsane.letschat.view.control.RecordButton;
 import com.xinsane.util.LogUtil;
 
 import org.litepal.crud.DataSupport;
@@ -52,18 +54,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity implements SocketService.EventListener {
+public class MainActivity extends AppCompatActivity
+        implements SocketService.EventListener,
+                    RecordButton.RecordListener {
     private static final int REQUEST_TAKE_PHOTO = 1;
     private static final int REQUEST_CHOOSE_PHOTO = 2;
     private static final int REQUEST_CONFIRM_PHOTO = 3;
+    private static final int REQUEST_RECORD_AUDIO = 4;
 
     private SocketService service;
     private ServiceConnection connection;
-    private List<Msg> list = new ArrayList<>();
+    private List<Item> list = new ArrayList<>();
     private EditText editText;
     private RecyclerView recyclerView;
     private MessageAdapter adapter;
     private Uri takePhotoImage;
+
+    private LinearLayout input_text;
+    private LinearLayout input_audio;
 
     @Override
     public void onConnected() {
@@ -110,6 +118,16 @@ public class MainActivity extends AppCompatActivity implements SocketService.Eve
         message.what = MessageHandler.EVENT_ERROR;
         message.obj = msg;
         handler.sendMessage(message);
+    }
+
+    @Override
+    public void onRecordComplete(String filename) {
+        LogUtil.d(filename, "RecordFile");
+        SelfVoice selfVoice = new SelfVoice().setInfo("我").setText("[语音]").setFilepath(filename);
+        list.add(selfVoice);
+        notifyPushOne();
+        recyclerView.scrollToPosition(list.size() - 1);
+        selfVoice.save();
     }
 
     @Override
@@ -199,6 +217,30 @@ public class MainActivity extends AppCompatActivity implements SocketService.Eve
                     recyclerView.scrollToPosition(list.size() - 1);
             }
         });
+
+        // 绑定文本和语音输入切换事件
+        input_text = findViewById(R.id.input_text);
+        input_audio = findViewById(R.id.input_audio);
+        findViewById(R.id.btn_input_audio).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (checkRecordAudioPermission(REQUEST_RECORD_AUDIO)) {
+                    input_text.setVisibility(View.GONE);
+                    input_audio.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+        findViewById(R.id.btn_input_text).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                input_audio.setVisibility(View.GONE);
+                input_text.setVisibility(View.VISIBLE);
+            }
+        });
+
+        // 设置录音完成监听器
+        RecordButton recordButton = findViewById(R.id.btn_start_record);
+        recordButton.setListener(this);
     }
 
     @Override
@@ -291,6 +333,16 @@ public class MainActivity extends AppCompatActivity implements SocketService.Eve
         return true;
     }
 
+    private boolean checkRecordAudioPermission(int request) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[] { Manifest.permission.RECORD_AUDIO }, request);
+            return false;
+        }
+        return true;
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -298,6 +350,10 @@ public class MainActivity extends AppCompatActivity implements SocketService.Eve
                 openCamera();
             else if (requestCode == REQUEST_CHOOSE_PHOTO)
                 openAlbum();
+            else if (requestCode == REQUEST_RECORD_AUDIO) {
+                input_text.setVisibility(View.GONE);
+                input_audio.setVisibility(View.VISIBLE);
+            }
         }
         else
             Toast.makeText(this, "You denied the permission!", Toast.LENGTH_SHORT).show();
@@ -363,26 +419,29 @@ public class MainActivity extends AppCompatActivity implements SocketService.Eve
         else {
             for (int i = wrappers.size()-1; i>=0; --i) {
                 Wrapper wrapper = wrappers.get(i);
-                Msg msg = null;
+                Item item = null;
                 switch (wrapper.getType()) {
                     case "center_tip":
-                        msg = wrapper.getCenterTip();
+                        item = wrapper.getCenterTip();
                         break;
                     case "other_photo":
-                        msg = wrapper.getOtherPhoto();
+                        item = wrapper.getOtherPhoto();
                         break;
                     case "other_text":
-                        msg = wrapper.getOtherText();
+                        item = wrapper.getOtherText();
                         break;
                     case "self_photo":
-                        msg = wrapper.getSelfPhoto();
+                        item = wrapper.getSelfPhoto();
                         break;
                     case "self_text":
-                        msg = wrapper.getSelfText();
+                        item = wrapper.getSelfText();
+                        break;
+                    case "self_voice":
+                        item = wrapper.getSelfVoice();
                         break;
                 }
-                if (msg != null)
-                    list.add(msg);
+                if (item != null)
+                    list.add(item);
             }
             list.add(new CenterTip("以上为近期历史消息"));
         }

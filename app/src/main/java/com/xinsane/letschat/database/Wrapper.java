@@ -5,6 +5,7 @@ import com.xinsane.letschat.msg.item.OtherPhoto;
 import com.xinsane.letschat.msg.item.OtherText;
 import com.xinsane.letschat.msg.item.SelfPhoto;
 import com.xinsane.letschat.msg.item.SelfText;
+import com.xinsane.letschat.msg.item.SelfVoice;
 
 import org.litepal.crud.DataSupport;
 
@@ -18,6 +19,7 @@ public class Wrapper extends DataSupport {
     private OtherText otherText;
     private SelfText selfText;
     private SelfPhoto selfPhoto;
+    private SelfVoice selfVoice;
 
     public long getId() {
         return id;
@@ -102,6 +104,20 @@ public class Wrapper extends DataSupport {
     }
     public Wrapper setSelfPhoto(SelfPhoto selfPhoto) {
         this.selfPhoto = selfPhoto;
+        return this;
+    }
+
+    public SelfVoice getSelfVoice() {
+        if (selfVoice == null) {
+            String linkId = this.getClass().getSimpleName().toLowerCase();
+            List<SelfVoice> list = DataSupport.where(linkId + "_id=?", String.valueOf(id))
+                    .find(SelfVoice.class);
+            selfVoice = list.isEmpty() ? null : list.get(0);
+        }
+        return selfVoice;
+    }
+    public Wrapper setSelfVoice(SelfVoice selfVoice) {
+        this.selfVoice = selfVoice;
         return this;
     }
 }
