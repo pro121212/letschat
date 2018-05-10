@@ -121,9 +121,10 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onRecordComplete(String filename) {
+    public void onRecordComplete(String filename, long timeMillis) {
         LogUtil.d(filename, "RecordFile");
-        SelfVoice selfVoice = new SelfVoice().setInfo("我").setText("[语音]").setFilepath(filename);
+        String text = "[语音] " + (int) Math.ceil(timeMillis / 1000.0) + "\"";
+        SelfVoice selfVoice = new SelfVoice().setInfo("我").setText(text).setFilepath(filename);
         list.add(selfVoice);
         notifyPushOne();
         recyclerView.scrollToPosition(list.size() - 1);

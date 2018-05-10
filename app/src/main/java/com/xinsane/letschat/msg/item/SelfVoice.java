@@ -30,7 +30,10 @@ public class SelfVoice  extends DataSupport implements Item {
     public void onBindViewHolder(RecyclerView.ViewHolder viewHolder) {
         ViewHolder holder = (ViewHolder) viewHolder;
         holder.infoView.setText(info);
-        holder.textView.setText(text);
+        if (player != null && player.isPlaying())
+            holder.textView.setText("正在播放...");
+        else
+            holder.textView.setText(text);
     }
 
     @Override

@@ -38,6 +38,7 @@ public class RecordButton extends AppCompatButton {
     private ImageView dialog_image;
     private TextView dialog_text;
     private float touchDownY;
+    private long startTime;
 
     private MediaRecorder recorder;
     private RecordListener listener;
@@ -99,6 +100,7 @@ public class RecordButton extends AppCompatButton {
             recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
             recorder.prepare();
             recorder.start();
+            startTime = System.currentTimeMillis();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -127,7 +129,7 @@ public class RecordButton extends AppCompatButton {
                 recorder.release();
                 recorder = null;
                 if (old_status == RecordStatus.RECORD_ON && listener != null)
-                    listener.onRecordComplete(filename);
+                    listener.onRecordComplete(filename, System.currentTimeMillis() - startTime);
                 performClick();
                 break;
         }
@@ -142,6 +144,6 @@ public class RecordButton extends AppCompatButton {
     }
 
     public interface RecordListener {
-        void onRecordComplete(String filename);
+        void onRecordComplete(String filename, long timeMillis);
     }
 }
