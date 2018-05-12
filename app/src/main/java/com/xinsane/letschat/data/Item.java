@@ -1,8 +1,7 @@
-package com.xinsane.letschat.msg;
+package com.xinsane.letschat.data;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
-import android.view.View;
 
 import java.util.List;
 

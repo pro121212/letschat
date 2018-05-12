@@ -3,14 +3,16 @@ package com.xinsane.letschat.service;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Environment;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 
-import com.xinsane.letschat.msg.item.CenterTip;
-import com.xinsane.letschat.msg.item.OtherPhoto;
-import com.xinsane.letschat.msg.item.OtherText;
-import com.xinsane.letschat.msg.item.SelfPhoto;
-import com.xinsane.letschat.msg.item.SelfText;
+import com.xinsane.letschat.data.FileItem;
+import com.xinsane.letschat.data.item.CenterTip;
+import com.xinsane.letschat.data.item.OtherPhoto;
+import com.xinsane.letschat.data.item.OtherText;
+import com.xinsane.letschat.data.item.OtherVoice;
+import com.xinsane.letschat.data.item.SelfText;
 import com.xinsane.letschat.protocol.MessageType;
 import com.xinsane.letschat.util.DataIOUtil;
 import com.xinsane.letschat.util.Location;
@@ -87,27 +89,38 @@ public class SocketService extends Service implements Runnable {
         }.start();
     }
 
-    public void sendImage(final String filePath, final String destFilePath) {
+    private String beforeSendImage(String srcFilepath) throws IOException {
+        File dir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        if (dir == null) {
+            LogUtil.e("Can not access external file dir.", "SocketService.sendFile");
+            if (listener != null)
+                listener.onError("Can not access external file dir.");
+            return null;
+        }
+        String destFilePath = dir.getPath() + "/" +
+                UUID.randomUUID().toString().replace("-", "") + ".jpg";
+        File file = new File(destFilePath);
+        OutputStream outputStream = new FileOutputStream(file);
+        PhotoCompress.compress(srcFilepath, outputStream);
+        outputStream.close();
+        return destFilePath;
+    }
+
+    public void sendFile(final FileItem fileItem, final String ext) {
         if (writer == null)
             return;
         new Thread() {
             @Override
             public void run() {
                 try {
-                    File file = new File(filePath);
-                    if (!file.exists()) {
-                        if (listener != null)
-                            listener.onError("图片发送失败：File Not Found");
-                        return;
-                    }
-                    file = new File(destFilePath);
-                    OutputStream outputStream = new FileOutputStream(file);
-                    PhotoCompress.compress(filePath, outputStream);
-                    outputStream.close();
-                    new SelfPhoto().setFilepath(destFilePath).setInfo(name).save(); // 保存数据
+                    // 压缩图片，但语音不压缩
+                    if (ext.equals("jpg"))
+                        fileItem.setFilepath(beforeSendImage(fileItem.getFilepath()));
+                    fileItem.save(); // 保存数据
+                    File file = new File(fileItem.getFilepath());
                     synchronized (writeLocker) {
                         writer.writeByte(MessageType.FILE);
-                        DataIOUtil.sendString(writer, "jpg");
+                        DataIOUtil.sendString(writer, ext);
                         FileInputStream fileInputStream = new FileInputStream(file);
                         DataIOUtil.sendFile(writer, fileInputStream);
                         fileInputStream.close();
@@ -116,7 +129,7 @@ public class SocketService extends Service implements Runnable {
                 } catch (IOException e) {
                     e.printStackTrace();
                     if (listener != null)
-                        listener.onError("图片发送失败：IOException");
+                        listener.onError("文件发送失败：IOException");
                 }
             }
         }.start();
@@ -263,13 +276,24 @@ public class SocketService extends Service implements Runnable {
                         break;
                     }
                     case MessageType.FILE_ID: {
+                        String ext = DataIOUtil.receiveString(reader); // 接收文件后缀
                         String user = DataIOUtil.receiveString(reader);
                         String token = DataIOUtil.receiveString(reader);
                         int index = -1;
-                        OtherPhoto otherPhoto = new OtherPhoto(user);
+                        FileItem item;
+                        switch (ext) {
+                            case "jpg":
+                                item = new OtherPhoto(user);
+                                break;
+                            case "amr":
+                                item = new OtherVoice(user).setText("[语音消息]");
+                                break;
+                            default:
+                                continue;
+                        }
                         if (listener != null)
-                            index = listener.onFileMessage(otherPhoto);
-                        downloadImage(otherPhoto, token, index);
+                            index = listener.onFileMessage(item);
+                        downloadFile(item, token, index);
                         break;
                     }
                     case MessageType.EXIT: {
@@ -288,7 +312,7 @@ public class SocketService extends Service implements Runnable {
         }
     }
 
-    private void downloadImage(final OtherPhoto otherPhoto, final String token, final int index) {
+    private void downloadFile(final FileItem item, final String token, final int index) {
         new Thread() {
             @Override
             public void run() {
@@ -299,8 +323,6 @@ public class SocketService extends Service implements Runnable {
                         LogUtil.e("Can not access external files dir.");
                         return;
                     }
-                    final File file = new File(dir + "/" +
-                            UUID.randomUUID().toString().replace("-", "") + ".jpg");
 
                     socket = new Socket(host, port);
                     socket.setSoTimeout(10000);
@@ -312,13 +334,16 @@ public class SocketService extends Service implements Runnable {
                     byte type = in.readByte();
                     if (type != MessageType.FILE)
                         LogUtil.e("wrong type(expect FILE): " + type);
-                    DataIOUtil.receiveString(in);
+
+                    String ext = DataIOUtil.receiveString(in);
+                    final File file = new File(dir + "/" +
+                            UUID.randomUUID().toString().replace("-", "") + "." + ext);
 
                     FileOutputStream fileOutputStream = new FileOutputStream(file);
                     DataIOUtil.receiveFile(in, fileOutputStream);
                     fileOutputStream.close();
 
-                    otherPhoto.setFilepath(file.getAbsolutePath()).save(); // 保存数据
+                    item.setFilepath(file.getAbsolutePath()).save(); // 保存数据
 
                     if (listener != null && index >= 0)
                         listener.onFileDownloaded(file.getAbsolutePath(), index);
@@ -365,7 +390,7 @@ public class SocketService extends Service implements Runnable {
     public interface EventListener {
         void onConnected();
         void onTextMessage(OtherText otherText);
-        int onFileMessage(OtherPhoto otherPhoto);
+        int onFileMessage(FileItem fileItem);
         void onFileDownloaded(String filepath, int index);
         void onTip(CenterTip centerTip);
         void onError(String msg);

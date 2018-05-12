@@ -34,14 +34,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.xinsane.letschat.R;
+import com.xinsane.letschat.data.FileItem;
 import com.xinsane.letschat.database.Wrapper;
-import com.xinsane.letschat.msg.Item;
-import com.xinsane.letschat.msg.item.CenterTip;
-import com.xinsane.letschat.msg.item.OtherPhoto;
-import com.xinsane.letschat.msg.item.OtherText;
-import com.xinsane.letschat.msg.item.SelfPhoto;
-import com.xinsane.letschat.msg.item.SelfText;
-import com.xinsane.letschat.msg.item.SelfVoice;
+import com.xinsane.letschat.data.Item;
+import com.xinsane.letschat.data.item.CenterTip;
+import com.xinsane.letschat.data.item.OtherText;
+import com.xinsane.letschat.data.item.SelfPhoto;
+import com.xinsane.letschat.data.item.SelfText;
+import com.xinsane.letschat.data.item.SelfVoice;
 import com.xinsane.letschat.service.SocketService;
 import com.xinsane.letschat.view.control.RecordButton;
 import com.xinsane.util.LogUtil;
@@ -52,7 +52,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity
         implements SocketService.EventListener,
@@ -87,11 +86,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public int onFileMessage(final OtherPhoto otherPhoto) {
+    public int onFileMessage(final FileItem fileItem) {
         int index = list.size();
         Message message = new Message();
-        message.what = MessageHandler.EVENT_PHOTO_MESSAGE;
-        message.obj = otherPhoto;
+        message.what = MessageHandler.EVENT_FILE_MESSAGE;
+        message.obj = fileItem;
         handler.sendMessage(message);
         return index;
     }
@@ -99,7 +98,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onFileDownloaded(String filepath, int index) {
         Message message = new Message();
-        message.what = MainActivity.MessageHandler.EVENT_PHOTO_MESSAGE;
+        message.what = MainActivity.MessageHandler.EVENT_FILE_MESSAGE;
         message.arg1 = index;
         handler.sendMessage(message);
     }
@@ -122,13 +121,17 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onRecordComplete(String filename, long timeMillis) {
-        LogUtil.d(filename, "RecordFile");
-        String text = "[语音] " + (int) Math.ceil(timeMillis / 1000.0) + "\"";
-        SelfVoice selfVoice = new SelfVoice().setInfo("我").setText(text).setFilepath(filename);
+        if (timeMillis < 500) {
+            Toast.makeText(this, "录音时间过短", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // String text = "[语音] " + (int) Math.ceil(timeMillis / 1000.0) + "\"";
+        String text = "[语音消息]";
+        SelfVoice selfVoice = new SelfVoice().setInfo(service.getName()).setText(text).setFilepath(filename);
+        service.sendFile(selfVoice, "amr");
         list.add(selfVoice);
         notifyPushOne();
         recyclerView.scrollToPosition(list.size() - 1);
-        selfVoice.save();
     }
 
     @Override
@@ -297,17 +300,11 @@ public class MainActivity extends AppCompatActivity
             case REQUEST_CONFIRM_PHOTO:
                 if (resultCode == RESULT_OK) {
                     String filepath = data.getStringExtra("filepath");
-                    LogUtil.d(filepath);
-                    File dir = getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES);
-                    if (dir != null) {
-                        String filename = UUID.randomUUID().toString().replace("-", "") + ".jpg";
-                        service.sendImage(filepath, dir.getPath() + "/" + filename);
-                        list.add(new SelfPhoto(service.getName(), filepath));
-                        notifyPushOne();
-                        recyclerView.scrollToPosition(list.size() - 1);
-                    }
-                    else
-                        Toast.makeText(this, "Can not access external file dir.", Toast.LENGTH_SHORT).show();
+                    SelfPhoto selfPhoto = new SelfPhoto(service.getName(), filepath);
+                    service.sendFile(selfPhoto, "jpg");
+                    list.add(selfPhoto);
+                    notifyPushOne();
+                    recyclerView.scrollToPosition(list.size() - 1);
                 }
                 break;
         }
@@ -431,6 +428,9 @@ public class MainActivity extends AppCompatActivity
                     case "other_text":
                         item = wrapper.getOtherText();
                         break;
+                    case "other_voice":
+                        item = wrapper.getOtherVoice();
+                        break;
                     case "self_photo":
                         item = wrapper.getSelfPhoto();
                         break;
@@ -469,7 +469,7 @@ public class MainActivity extends AppCompatActivity
     static class MessageHandler extends Handler {
         static final int EVENT_CONNECTED = 0x01;
         static final int EVENT_TEXT_MESSAGE = 0x02;
-        static final int EVENT_PHOTO_MESSAGE = 0x03;
+        static final int EVENT_FILE_MESSAGE = 0x03;
         static final int EVENT_TEXT_TIP = 0x04;
         static final int EVENT_ERROR = 0x05;
 
@@ -490,9 +490,9 @@ public class MainActivity extends AppCompatActivity
                     activity.list.add((OtherText) msg.obj);
                     activity.notifyPushOne();
                     break;
-                case EVENT_PHOTO_MESSAGE:
+                case EVENT_FILE_MESSAGE:
                     if (msg.obj != null) {
-                        activity.list.add((OtherPhoto) msg.obj);
+                        activity.list.add((FileItem) msg.obj);
                         activity.notifyPushOne();
                     } else
                         activity.adapter.notifyItemChanged(msg.arg1);

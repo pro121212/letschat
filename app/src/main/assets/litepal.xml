@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <litepal>
     <dbname value="chat"/>
-    <version value="3"/>
+    <version value="4"/>
     <list>
         <mapping class="com.xinsane.letschat.database.Wrapper"/>
-        <mapping class="com.xinsane.letschat.msg.item.CenterTip"/>
-        <mapping class="com.xinsane.letschat.msg.item.OtherPhoto"/>
-        <mapping class="com.xinsane.letschat.msg.item.OtherText"/>
-        <mapping class="com.xinsane.letschat.msg.item.SelfPhoto"/>
-        <mapping class="com.xinsane.letschat.msg.item.SelfText"/>
-        <mapping class="com.xinsane.letschat.msg.item.SelfVoice"/>
+        <mapping class="com.xinsane.letschat.data.item.CenterTip"/>
+        <mapping class="com.xinsane.letschat.data.item.OtherPhoto"/>
+        <mapping class="com.xinsane.letschat.data.item.OtherText"/>
+        <mapping class="com.xinsane.letschat.data.item.OtherVoice"/>
+        <mapping class="com.xinsane.letschat.data.item.SelfPhoto"/>
+        <mapping class="com.xinsane.letschat.data.item.SelfText"/>
+        <mapping class="com.xinsane.letschat.data.item.SelfVoice"/>
     </list>
 </litepal>

@@ -1,4 +1,4 @@
-package com.xinsane.letschat.msg.item;
+package com.xinsane.letschat.data.item;
 
 import android.media.MediaPlayer;
 import android.support.v7.widget.RecyclerView;
@@ -7,15 +7,16 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.xinsane.letschat.R;
+import com.xinsane.letschat.data.FileItem;
 import com.xinsane.letschat.database.Wrapper;
-import com.xinsane.letschat.msg.Item;
+import com.xinsane.letschat.data.Item;
 
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 
 import java.io.IOException;
 
-public class SelfVoice  extends DataSupport implements Item {
+public class SelfVoice  extends DataSupport implements FileItem {
     private String info, filepath, text;
 
     @Column(ignore = true)
@@ -43,13 +44,18 @@ public class SelfVoice  extends DataSupport implements Item {
         return is;
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView infoView, textView;
-        public ViewHolder(View view, final Item.Adapter adapter) {
+    public static RecyclerView.ViewHolder onCreateViewHolder(View view, Item.Adapter adapter) {
+        return new ViewHolder(view, adapter);
+    }
+
+    private static class ViewHolder extends RecyclerView.ViewHolder {
+        private TextView infoView, textView;
+
+        private ViewHolder(View view, final Item.Adapter adapter) {
             super(view);
             infoView = view.findViewById(R.id.info);
             textView = view.findViewById(R.id.text);
-            view.setOnClickListener(new View.OnClickListener() {
+            view.findViewById(R.id.content).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     // 获取当前绑定的数据位置

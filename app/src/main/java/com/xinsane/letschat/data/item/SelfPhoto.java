@@ -1,4 +1,4 @@
-package com.xinsane.letschat.msg.item;
+package com.xinsane.letschat.data.item;
 
 import android.content.Context;
 import android.content.Intent;
@@ -14,15 +14,16 @@ import com.facebook.imagepipeline.common.ResizeOptions;
 import com.facebook.imagepipeline.request.ImageRequest;
 import com.facebook.imagepipeline.request.ImageRequestBuilder;
 import com.xinsane.letschat.R;
+import com.xinsane.letschat.data.FileItem;
 import com.xinsane.letschat.database.Wrapper;
-import com.xinsane.letschat.msg.Item;
+import com.xinsane.letschat.data.Item;
 import com.xinsane.letschat.view.ViewPhotoActivity;
 
 import org.litepal.crud.DataSupport;
 
 import java.io.File;
 
-public class SelfPhoto extends DataSupport implements Item {
+public class SelfPhoto extends DataSupport implements FileItem {
     private String info, filepath;
 
     @Override
@@ -54,14 +55,19 @@ public class SelfPhoto extends DataSupport implements Item {
         return is;
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView infoView;
-        SimpleDraweeView image;
-        public ViewHolder(View view, final Item.Adapter adapter) {
+    public static RecyclerView.ViewHolder onCreateViewHolder(View view, Item.Adapter adapter) {
+        return new ViewHolder(view, adapter);
+    }
+
+    private static class ViewHolder extends RecyclerView.ViewHolder {
+        private TextView infoView;
+        private SimpleDraweeView image;
+
+        private ViewHolder(View view, final Item.Adapter adapter) {
             super(view);
             infoView = view.findViewById(R.id.info);
             image = view.findViewById(R.id.image);
-            view.setOnClickListener(new View.OnClickListener() {
+            image.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     // 获取当前绑定的数据位置

@@ -3,17 +3,16 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_marginStart="7dp"
     android:layout_marginEnd="7dp"
-    android:padding="7dp"
-    tools:ignore="RtlHardcoded">
+    android:padding="7dp">
     <TextView
         android:id="@+id/info"
         android:textSize="15sp"
-        android:layout_gravity="right"
-        android:layout_marginRight="5dp"
+        android:layout_gravity="left"
+        android:layout_marginLeft="5dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="3dp"
@@ -26,10 +25,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_gravity="right"
-        android:background="@drawable/self_text"
+        android:layout_gravity="left"
+        android:background="@drawable/other_text"
         android:maxWidth="250dp"
         tools:ignore="RtlHardcoded" >
+        <ImageView
+            android:layout_width="25dp"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_mic_black_24dp"
+            android:contentDescription="audio" />
         <TextView
             android:id="@+id/text"
             android:layout_width="wrap_content"
@@ -38,10 +42,5 @@
             android:layout_marginEnd="7dp"
             android:textSize="18sp"
             android:textColor="#333"/>
-        <ImageView
-            android:layout_width="25dp"
-            android:layout_height="wrap_content"
-            android:src="@drawable/ic_mic_black_24dp"
-            android:contentDescription="audio" />
     </LinearLayout>
 </LinearLayout>

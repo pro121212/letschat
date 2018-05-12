@@ -8,13 +8,15 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.xinsane.letschat.R;
-import com.xinsane.letschat.msg.Item;
-import com.xinsane.letschat.msg.item.CenterTip;
-import com.xinsane.letschat.msg.item.OtherPhoto;
-import com.xinsane.letschat.msg.item.OtherText;
-import com.xinsane.letschat.msg.item.SelfPhoto;
-import com.xinsane.letschat.msg.item.SelfText;
-import com.xinsane.letschat.msg.item.SelfVoice;
+import com.xinsane.letschat.data.Item;
+import com.xinsane.letschat.data.item.CenterTip;
+import com.xinsane.letschat.data.item.OtherPhoto;
+import com.xinsane.letschat.data.item.OtherText;
+import com.xinsane.letschat.data.item.OtherVoice;
+import com.xinsane.letschat.data.item.SelfPhoto;
+import com.xinsane.letschat.data.item.SelfText;
+import com.xinsane.letschat.data.item.SelfVoice;
+import com.xinsane.util.LogUtil;
 
 import java.util.List;
 
@@ -47,26 +49,30 @@ public class MessageAdapter extends RecyclerView.Adapter {
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, final int viewType) {
+        LogUtil.d("onCreateViewHolder:" + viewType);
         View view = LayoutInflater.from(parent.getContext()).inflate(viewType, parent, false);
         switch (viewType) {
             case R.layout.item_center_tip:
-                return new CenterTip.ViewHolder(view);
+                return CenterTip.onCreateViewHolder(view);
             case R.layout.item_other_photo:
-                return new OtherPhoto.ViewHolder(view, itemAdapter);
+                return OtherPhoto.onCreateViewHolder(view, itemAdapter);
             case R.layout.item_other_text:
-                return new OtherText.ViewHolder(view);
+                return OtherText.onCreateViewHolder(view);
+            case R.layout.item_other_voice:
+                return OtherVoice.onCreateViewHolder(view, itemAdapter);
             case R.layout.item_self_photo:
-                return new SelfPhoto.ViewHolder(view, itemAdapter);
+                return SelfPhoto.onCreateViewHolder(view, itemAdapter);
             case R.layout.item_self_text:
-                return new SelfText.ViewHolder(view);
+                return SelfText.onCreateViewHolder(view);
             case R.layout.item_self_voice:
-                return new SelfVoice.ViewHolder(view, itemAdapter);
+                return SelfVoice.onCreateViewHolder(view, itemAdapter);
         }
         throw new RuntimeException("catch wrong viewType");
     }
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        LogUtil.d("onBindViewHolder:" + position);
         list.get(position).onBindViewHolder(holder);
     }
 

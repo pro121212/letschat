@@ -1,4 +1,4 @@
-package com.xinsane.letschat.msg.item;
+package com.xinsane.letschat.data.item;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -6,7 +6,7 @@ import android.widget.TextView;
 
 import com.xinsane.letschat.R;
 import com.xinsane.letschat.database.Wrapper;
-import com.xinsane.letschat.msg.Item;
+import com.xinsane.letschat.data.Item;
 
 import org.litepal.crud.DataSupport;
 
@@ -31,9 +31,14 @@ public class CenterTip extends DataSupport implements Item {
         return is;
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tipView;
-        public ViewHolder(View view) {
+    public static RecyclerView.ViewHolder onCreateViewHolder(View view) {
+        return new ViewHolder(view);
+    }
+
+    private static class ViewHolder extends RecyclerView.ViewHolder {
+        private TextView tipView;
+
+        private ViewHolder(View view) {
             super(view);
             tipView = view.findViewById(R.id.tip);
         }

@@ -1,11 +1,12 @@
 package com.xinsane.letschat.database;
 
-import com.xinsane.letschat.msg.item.CenterTip;
-import com.xinsane.letschat.msg.item.OtherPhoto;
-import com.xinsane.letschat.msg.item.OtherText;
-import com.xinsane.letschat.msg.item.SelfPhoto;
-import com.xinsane.letschat.msg.item.SelfText;
-import com.xinsane.letschat.msg.item.SelfVoice;
+import com.xinsane.letschat.data.item.CenterTip;
+import com.xinsane.letschat.data.item.OtherPhoto;
+import com.xinsane.letschat.data.item.OtherText;
+import com.xinsane.letschat.data.item.OtherVoice;
+import com.xinsane.letschat.data.item.SelfPhoto;
+import com.xinsane.letschat.data.item.SelfText;
+import com.xinsane.letschat.data.item.SelfVoice;
 
 import org.litepal.crud.DataSupport;
 
@@ -17,6 +18,7 @@ public class Wrapper extends DataSupport {
     private CenterTip centerTip;
     private OtherPhoto otherPhoto;
     private OtherText otherText;
+    private OtherVoice otherVoice;
     private SelfText selfText;
     private SelfPhoto selfPhoto;
     private SelfVoice selfVoice;
@@ -118,6 +120,20 @@ public class Wrapper extends DataSupport {
     }
     public Wrapper setSelfVoice(SelfVoice selfVoice) {
         this.selfVoice = selfVoice;
+        return this;
+    }
+
+    public OtherVoice getOtherVoice() {
+        if (otherVoice == null) {
+            String linkId = this.getClass().getSimpleName().toLowerCase();
+            List<OtherVoice> list = DataSupport.where(linkId + "_id=?", String.valueOf(id))
+                    .find(OtherVoice.class);
+            otherVoice = list.isEmpty() ? null : list.get(0);
+        }
+        return otherVoice;
+    }
+    public Wrapper setOtherVoice(OtherVoice otherVoice) {
+        this.otherVoice = otherVoice;
         return this;
     }
 }
